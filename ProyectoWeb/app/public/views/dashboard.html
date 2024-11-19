@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="/css/tailwind.output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-base-200 min-h-screen flex">
+    
+    <!-- Sidebar -->
+    <div class="w-64 bg-base-100 shadow-lg hidden lg:block h-screen">
+        <div class="p-4 text-xl font-semibold">Mi Dashboard</div>
+        <ul class="menu p-4">
+            <li><a href="#dashboard">Inicio</a></li>
+            <li><a href="/dashboard/add-income">Agregar Ingreso</a></li>
+            <li><a href="/dashboard/add-expense">Agregar Gasto</a></li>
+        </ul>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <!-- Contenedor Principal -->
+    <div class="flex-1 p-8 overflow-y-auto">
+        <div class="w-full max-w-4xl mx-auto bg-base-100 shadow-lg p-6 rounded-lg min-h-[80vh]">
+            <!-- Título del dashboard -->
+            <h2 class="text-3xl font-semibold text-center mb-6">Resumen Financiero</h2>
+
+            <!-- Gráfica -->
+            <div class="flex justify-center mb-8">
+                <div style="width: 300px; height: 300px;">
+                    <canvas id="expensesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Sección de desglose de datos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Tarjeta de Ingresos -->
+                <div class="card bg-base-100 shadow-md p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold">Ingresos Mensuales</h3>
+                        <span class="badge badge-success badge-lg">Disponible</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800">$<span id="incomeAmount">0</span></p>
+                </div>
+
+                <!-- Tarjeta de Gastos -->
+                <div class="card bg-base-100 shadow-md p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold">Gastos Totales</h3>
+                        <span class="badge badge-error badge-lg">Gastos</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800">$<span id="expensesAmount">0</span></p>
+                </div>
+
+                <!-- Tarjeta de Ahorros -->
+                <div class="card bg-base-100 shadow-md p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold">Meta de Ahorro</h3>
+                        <span class="badge badge-info badge-lg">Ahorro</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800">$<span id="savingGoalAmount">0</span></p>
+                </div>
+
+                <!-- Tarjeta de Gastos Restantes -->
+                <div class="card bg-base-100 shadow-md p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold">Saldo Restante</h3>
+                        <span class="badge badge-warning badge-lg">Disponible</span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800">$<span id="remainingAmount">0</span></p>
+                </div>
+            </div>
+
+            <!-- Historial de Transacciones -->
+            <div id="transactionHistory" class="mt-8">
+                <h2 class="text-2xl font-semibold mb-6 text-center">Historial de Transacciones</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Historial de Gastos -->
+                    <div class="card bg-base-100 shadow-md p-6">
+                        <h3 class="text-xl font-semibold mb-4">Gastos</h3>
+                        <ul id="expensesList" class="space-y-4"></ul>
+                    </div>
+
+                    <!-- Historial de Ingresos -->
+                    <div class="card bg-base-100 shadow-md p-6">
+                        <h3 class="text-xl font-semibold mb-4">Ingresos</h3>
+                        <ul id="incomesList" class="space-y-4"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+        <script>
+            async function fetchTransactionHistory() {
+                const response = await fetch('/dashboard/api/transaction-history');
+                const { expenses, incomes } = await response.json();
+        
+                // Mostrar gastos en formato de tarjeta
+                const expensesList = document.getElementById('expensesList');
+                expensesList.innerHTML = expenses.map(exp => 
+                    `<li class="p-4 bg-error text-white rounded-lg">
+                        <div class="flex justify-between">
+                            <span>${new Date(exp.date).toLocaleDateString()}</span>
+                            <span class="font-bold">$${exp.amount.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between mt-2">
+                            <span class="italic">${exp.category}</span>
+                            <span>${exp.description || ''}</span>
+                        </div>
+                    </li>`
+                ).join('');
+        
+                // Mostrar ingresos en formato de tarjeta
+                const incomesList = document.getElementById('incomesList');
+                incomesList.innerHTML = incomes.map(inc => 
+                    `<li class="p-4 bg-success text-white rounded-lg">
+                        <div class="flex justify-between">
+                            <span>${new Date(inc.date).toLocaleDateString()}</span>
+                            <span class="font-bold">$${inc.amount.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between mt-2">
+                            <span class="italic">${inc.source}</span>
+                            <span>${inc.description || ''}</span>
+                        </div>
+                    </li>`
+                ).join('');
+            }
+        
+            fetchTransactionHistory();
+        </script>
+        
+ 
+
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('/dashboard/api/dashboard-data');
+            const data = await response.json();
+            return data;
+        }
+
+        async function renderChart() {
+            const data = await fetchData();
+            const ctx = document.getElementById('expensesChart').getContext('2d');
+
+            const totalIncome = data.monthlyIncome;
+            const totalExpenses = data.averageExpenses;
+            const savingGoal = data.savingGoal || 0;
+            const remaining = totalIncome - totalExpenses;
+
+            // Actualizar los valores en las tarjetas
+            document.getElementById("incomeAmount").textContent = totalIncome.toFixed(2);
+            document.getElementById("expensesAmount").textContent = totalExpenses.toFixed(2);
+            document.getElementById("savingGoalAmount").textContent = savingGoal.toFixed(2);
+            document.getElementById("remainingAmount").textContent = remaining.toFixed(2);
+
+            const chartData = {
+                labels: ['Gastos', 'Disponible'],
+                datasets: [{
+                    data: [totalExpenses, remaining],
+                    backgroundColor: ['#ff6384', '#36a2eb']
+                }]
+            };
+
+            const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // Oculta la leyenda
+                        }
+                    }
+                };
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: chartData,
+                options: chartOptions
+            });
+
+        }
+
+        renderChart();
+    </script>
+</body>
+</html>

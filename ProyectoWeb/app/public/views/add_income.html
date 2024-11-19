@@ -1,0 +1,74 @@
+<!-- public/views/add_income.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Ingreso</title>
+    <link href="/css/tailwind.output.css" rel="stylesheet">
+</head>
+<body class="bg-base-200 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md bg-base-100 shadow-lg p-6 rounded-lg">
+        <h2 class="text-2xl font-semibold text-center mb-6">Agregar Ingreso</h2>
+        <form id="incomeForm" action="/dashboard/add-income" method="POST">
+            <div class="mb-4">
+                <label class="label">Monto</label>
+                <input type="number" name="amount" class="input input-bordered w-full" required>
+            </div>
+            <div class="mb-4">
+                <label class="label">Fuente</label>
+                <select name="source" class="select select-bordered w-full" required>
+                    <option value="Salario">Salario</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Inversiones">Inversiones</option>
+                    <option value="Otros">Otros</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="label">Descripción</label>
+                <input type="text" name="description" class="input input-bordered w-full">
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Guardar Ingreso</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('incomeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+    
+            const formData = new FormData(e.target);
+            const incomeData = {
+                amount: parseFloat(formData.get('amount')),
+                source: formData.get('source'),
+                description: formData.get('description')
+            };
+    
+            // Envía los datos al backend
+            const response = await fetch('/dashboard/add-income', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(incomeData)
+            });
+    
+            const result = await response.json();
+            
+            // Muestra el mensaje de éxito o error
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('alert', result.success ? 'alert-success' : 'alert-error', 'mt-4');
+            messageContainer.innerHTML = `<span>${result.message || result.error}</span>`;
+    
+            // Agrega el mensaje al formulario
+            e.target.insertAdjacentElement('beforebegin', messageContainer);
+    
+            if (result.success) {
+                e.target.reset();  // Limpia el formulario en caso de éxito
+                setTimeout(() => {
+                    window.location.href = '/dashboard';  // Redirige al dashboard después de 1 segundo
+                }, 1000);
+            }
+        });
+    </script>
+    
+    
+</body>
+</html>
